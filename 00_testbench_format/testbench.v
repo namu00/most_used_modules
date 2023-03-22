@@ -1,7 +1,7 @@
 module testbench();
     //reg/wire Define
-    reg clk;
-    reg n_rst;
+    reg clk;    //Clock
+    reg n_rst;  //Neg-Active Reset
 
 
     //DUT Instance
@@ -14,6 +14,7 @@ module testbench();
     end
     endtask
 */
+    //initialize CLOCK & RST
     initial begin
         clk = 1'b0;
         n_rst = 1'b0;
