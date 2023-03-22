@@ -1,6 +1,6 @@
 /*
 	Writer: namu_00
-	GitHub: https://github.com/namu00
+	GitHub: https://github.com/namu00/most_used_modules
 
 	*Notion*
 	common-cathode: light up when HIGH, light off when LOW
