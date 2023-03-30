@@ -4,7 +4,7 @@
     Description: Pushbutton Debouncer
 
     *Notion*
-    __OUTPUT(rectified_out) IS ACTIVE HIGH__
+    __OUTPUT( "rectified_out" ) IS ACTIVE HIGH__
 */
 module debouncer(
     parameter WAIT_TIME_NS = 20;            //wait time (ns), default: 20 ns
