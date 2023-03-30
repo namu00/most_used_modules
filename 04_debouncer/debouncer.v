@@ -7,8 +7,8 @@
     __OUTPUT( "rectified_out" ) IS ACTIVE HIGH__
 */
 module debouncer(
-    parameter WAIT_TIME_NS = 20;            //wait time (ns), default: 20 ns
-    parameter CLK_FREQ_MHZ = 50_000_000;    //clock frequency (mHz), default: 50 mHz
+    parameter WAIT_TIME_NS = 20,            //wait time (ns), default: 20 ns
+    parameter CLK_FREQ_MHZ = 50_000_000     //clock frequency (mHz), default: 50 mHz
 )(
     input clk,
     input n_rst,
