@@ -16,20 +16,19 @@ module debouncer(
     input push_button,
     output rectified_out
 );
-
+    //parameter define
     localparam CLK_PERIOD = 1_000_000_000 / CLK_FREQ;
     localparam CNT_MAX = CLK_PERIOD * WAIT_TIME_NS;
     localparam CNT_WIDTH = $clog2(CNT_MAX);
 
+    //state define
     localparam RELEASED = 0;
     localparam PUSH_WAIT = 1;
     localparam PUSHED = 2;
 
-
     reg [CNT_WIDTH-1 : 0] clk_cnt;  //clock counter
     reg [1:0] c_state, n_state;     //state registers
     reg rect_out;                   //rectified output (registered output)
-    
 
     wire counter_max;   //counter max flag
     wire cnt_busy;      //counter busy flag
