@@ -66,7 +66,7 @@ module debouncer(
         case(c_state)
             RELEASED:   n_state = (button) ? PUSH_WAIT : c_state;
             PUSH_WAIT:  n_state = (counter_max) ? PUSHED : c_state;
-            PUSHED:     n_state = (button) ? RELEASED : c_state;
+            PUSHED:     n_state = (!button) ? RELEASED : c_state;
             default:    n_state = RELEASED;
         endcase
     end
