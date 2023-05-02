@@ -7,14 +7,14 @@
 	common-anode: light up when LOW, light off when HIGH 
 
 	+-- A --+
-	|		|
-	F		B
-	|		|
+	|       |
+	F       B
+	|       |
 	+-- G --+
-	|		|
-	E	 	C
-	|		|
-	+-- D --+	.DP
+	|       |
+	E       C
+	|       |
+	+-- D --+ .DP
 */
 
 module hex_7_segment(
