@@ -6,78 +6,81 @@
     *Notion*
     __OUTPUT( "rectified_out" ) IS ACTIVE HIGH__
 */
-module debouncer(
-    parameter WAIT_TIME_NS = 20,            //wait time (ns), default: 20 ns
-    parameter CLK_FREQ_MHZ = 50_000_000     //clock frequency (mHz), default: 50 mHz
+module debouncer#(
+  parameter CLK_PERIOD_NS = 20,   // 20ns period
+  parameter BOUNCE_TIME_MS = 20   // 20ms bouncing
 )(
-    input clk,
-    input n_rst,
-    input active_low,
-    input push_button,
-    output rectified_out
+  input clk,
+  input n_rst,
+
+  input active_low,    //active-low flag
+  input button_in,     //push button input
+  output button_out    //rectified output
 );
-    //parameter define
-    localparam CLK_PERIOD = 1_000_000_000 / CLK_FREQ;
-    localparam CNT_MAX = CLK_PERIOD * WAIT_TIME_NS;
-    localparam CNT_WIDTH = $clog2(CNT_MAX);
 
-    //state define
-    localparam RELEASED = 0;
-    localparam PUSH_WAIT = 1;
-    localparam PUSHED = 2;
+  /*parameter define*/
+  //for implementing
+  localparam TIME_SCALE = 1_000_000; //1ns
 
-    reg [CNT_WIDTH-1 : 0] clk_cnt;  //clock counter
-    reg [1:0] c_state, n_state;     //state registers
-    reg rect_out;                   //rectified output (registered output)
+  //for fast simulation
+  //localparam TIME_SCALE = CLK_PERIOD_NS;
+  localparam CNT_MAX = (BOUNCE_TIME_MS * TIME_SCALE) / CLK_PERIOD_NS;
+  localparam CNT_WIDTH = $clog2(CNT_MAX);
 
-    wire counter_max;   //counter max flag
-    wire cnt_busy;      //counter busy flag
-    wire button;        //button signal
+  /*state define*/
+  localparam RELEASED = 0;
+  localparam PUSH_WAIT = 1;
+  localparam PUSHED = 2;
+  localparam RELEASE_WAIT = 3;
 
-    //flag assignment
-    assign counter_max = (clk_cnt == (CNT_MAX -1)) ? 1'b1 : 1'b0;
-    assign cnt_busy = (c_state == PUSH_WAIT) ? 1'b1 : 1'b0;
-    assign button = push_button && ~(active_low);
+  /*reg & wire define*/
+  reg [CNT_WIDTH-1:0] clk_cnt;
+  reg rect_out;
 
-    //output assignment
-    assign rectified_out = rect_out;
+  reg [1:0] c_state, n_state;
 
-    //busy edge detecting logic
-    always @(posedge clk or negedge n_rst)begin
-        if(!n_rst)  busy_d <= 1'b0;
-        else        busy_d <= busy;
-    end
+  wire btn;
+  wire cnt_max;
+  wire cnt_busy;
 
-    //clock counter logic
-    always @(posedge clk or negedge n_rst)begin
-        if(!n_rst)              clk_cnt <= {CNT_WIDTH{1'b0}};
-        else if(cnt_busy)       clk_cnt <= {(CNT_WIDTH-1){1'b0},1'b1};
-        else                    clk_cnt <= {CNT_WIDTH{1'b0}};
-    end
-    
-    //current state assigner
-    always @(posedge clk or negedge n_rst)begin
-        if(!n_rst)  c_state <= RELEASED;
-        else        c_state <= n_state;
-    end
+  /*flag assignment*/
+  assign btn = (active_low) ? !(button_in) : (button_in); //make "btn" act like active-high
+  assign cnt_max = (clk_cnt == (CNT_MAX-1)) ? 1'b1 : 1'b0;
+  assign cnt_busy = ((c_state == PUSH_WAIT) || (c_state == RELEASE_WAIT));
 
-    //next state assigner
-    always @(*)begin
-        case(c_state)
-            RELEASED:   n_state = (button) ? PUSH_WAIT : c_state;
-            PUSH_WAIT:  n_state = (counter_max) ? PUSHED : c_state;
-            PUSHED:     n_state = (!button) ? RELEASED : c_state;
-            default:    n_state = RELEASED;
-        endcase
-    end
+  /*output assignment*/
+  assign button_out = rect_out;
 
-    //output assigner
-    always @(posedge clk or negedge n_rst)begin
-        case(c_state)
-            RELEASED:   rect_out <= 1'b0;
-            PUSH_WAIT:  rect_out <= 1'b1;
-            PUSHED:     rect_out <= 1'b1;
-            default:    rect_out <= 1'b0;
-        endcase
-    end
+  /*clock counter logic*/
+  always @(posedge clk or negedge n_rst)begin
+    if(!n_rst)        clk_cnt <= 0;
+    else if(cnt_busy) clk_cnt <= clk_cnt + {{{CNT_WIDTH-1}{1'b0}},1'b1};
+    else              clk_cnt <= 0;  
+  end
+
+  /*current state assigner*/
+  always @(posedge clk or negedge n_rst)begin
+    if(!n_rst)  c_state <= RELEASED;
+    else        c_state <= n_state;
+  end
+
+  /*next state assigner*/
+  always @(*)begin
+    case(c_state)
+      RELEASED:     n_state = (btn) ? PUSH_WAIT : c_state;
+      PUSH_WAIT:    n_state = (cnt_max) ? PUSHED : c_state;
+      PUSHED:       n_state = !(btn) ? RELEASE_WAIT : c_state;
+      RELEASE_WAIT: n_state = (cnt_max) ? RELEASED : c_state;
+      default:      n_state = RELEASED;
+    endcase
+  end
+
+  /*state output assigner*/
+  always @(*)begin
+    case(c_state)
+      PUSHED:     rect_out = 1'b1;
+      PUSH_WAIT:  rect_out = 1'b1;
+      default:    rect_out = 1'b0;
+    endcase
+  end
 endmodule
